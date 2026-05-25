@@ -1,6 +1,7 @@
 package com.agroya.controller;
 
 import com.agroya.dto.request.OrderRequest;
+import com.agroya.dto.request.OrderUpdateRequest; // <-- NUEVO IMPORT
 import com.agroya.dto.response.OrderResponse;
 import com.agroya.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,5 +53,22 @@ public class OrderController {
     @Operation(summary = "Obtener detalles de un pedido por ID")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('COMPRADOR')")
+    @Operation(summary = "Actualizar dirección y municipio de un pedido")
+    public ResponseEntity<OrderResponse> updateOrder(
+            @PathVariable Long id,
+            @Valid @RequestBody OrderUpdateRequest request, // <-- CAMBIADO AQUÍ (De OrderRequest a OrderUpdateRequest)
+            Authentication authentication) {
+        return ResponseEntity.ok(orderService.updateOrder(id, request, authentication.getName()));
+    }
+
+    @PutMapping("/{id}/cancelar")
+    @PreAuthorize("hasRole('COMPRADOR') or hasRole('ADMIN')")
+    @Operation(summary = "Cancelar un pedido")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id, Authentication authentication) {
+        return ResponseEntity.ok(orderService.cancelOrder(id, authentication.getName()));
     }
 }
