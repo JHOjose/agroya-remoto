@@ -130,4 +130,21 @@ public class ProductServiceImpl implements ProductService {
                 .updatedAt(product.getUpdatedAt())
                 .build();
     }
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductResponse> getProductsByProducerByEmail(String email) {
+
+        User producer = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Usuario no encontrado"
+                        ));
+
+        return productRepository
+                .findByProductorId(producer.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
 }
+

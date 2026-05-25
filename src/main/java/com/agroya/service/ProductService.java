@@ -11,4 +11,5 @@ public interface ProductService {
     ProductResponse updateProduct(Long id, ProductRequest request, String producerEmail);
     void deleteProduct(Long id, String producerEmail);
     List<ProductResponse> getProductsByProducer(Long producerId);
+    List<ProductResponse> getProductsByProducerByEmail(String email);
 }

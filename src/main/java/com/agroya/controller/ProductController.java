@@ -68,9 +68,25 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/productor/{producerId}")
-    @Operation(summary = "Listar productos por productor")
-    public ResponseEntity<List<ProductResponse>> getProductsByProducer(@PathVariable Long producerId) {
-        return ResponseEntity.ok(productService.getProductsByProducer(producerId));
+    @GetMapping("/admin/todos")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Listar todos los productos (solo admin)")
+    public ResponseEntity<List<ProductResponse>> getAllProductsAdmin() {
+
+        return ResponseEntity.ok(
+                productService.getAllProducts()
+        );
+    }
+    @GetMapping("/mis-productos")
+    @PreAuthorize("hasRole('PRODUCTOR')")
+    @Operation(summary = "Listar mis productos")
+    public ResponseEntity<List<ProductResponse>> getMyProducts(
+            Authentication authentication) {
+
+        String email = authentication.getName();
+
+        return ResponseEntity.ok(
+                productService.getProductsByProducerByEmail(email)
+        );
     }
 }

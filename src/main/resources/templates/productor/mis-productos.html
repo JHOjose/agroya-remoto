@@ -56,13 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (msg) { mostrarAlerta(msg, 'success'); sessionStorage.removeItem('agroya_msg'); }
 
   try {
-    // Obtiene todos y filtra por el nombre del productor (solución sin endpoint específico)
-    const todos = await apiFetch('/api/productos');
-    const user  = sessionStorage.getItem('agroya_user') ?? '';
-    // Filtramos del lado cliente por productorNombre que contiene el email
-    const mios  = todos?.filter(p => p.productorNombre && p.productorNombre.includes(user.split('@')[0]))
-                       ?? todos ?? [];
-    renderTabla(mios.length ? mios : todos ?? []);
+    const productos = await apiFetch('/api/productos/mis-productos');
+
+    renderTabla(productos ?? []);
   } catch(err) {
     mostrarAlerta('Error al cargar: ' + err.message);
   }
