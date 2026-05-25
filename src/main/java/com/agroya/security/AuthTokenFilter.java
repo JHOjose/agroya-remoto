@@ -44,12 +44,13 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            String jwt = parseJwt(request);   // 1. intenta header Bearer
+            String jwt = parseJwt(request);        // 1. header Bearer
             if (jwt == null) {
-                jwt = parseJwtFromSession(request);  // 2. fallback: sesión HTTP
+                jwt = parseJwtFromSession(request); // 2. fallback: sesión HTTP
             }
 
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+                // JWT válido → cargar usuario normalmente
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication =
@@ -58,9 +59,27 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+            } else {
+                // ★ JWT expirado, inválido o ausente → limpiar sesión y contexto ★
+                // Si el JWT es inválido pero existe en la sesión, lo borramos.
+                // Siempre limpiamos el SecurityContext para evitar el "usuario fantasma"
+                // si la sesión de Spring Security sobrevive.
+                if (jwt != null) {
+                    HttpSession session = request.getSession(false);
+                    if (session != null) {
+                        session.removeAttribute(SESSION_JWT_KEY);
+                    }
+                }
+                SecurityContextHolder.clearContext();
             }
+
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e.getMessage());
+            SecurityContextHolder.clearContext();
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.removeAttribute(SESSION_JWT_KEY);
+            }
         }
         filterChain.doFilter(request, response);
     }

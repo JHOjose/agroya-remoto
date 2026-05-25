@@ -23,7 +23,7 @@ public class AuthViewController {
 
     @GetMapping("/logout-success")
     public String logoutSuccess() {
-        // El JWT se borra desde JS (sessionStorage.removeItem)
-        return "redirect:/";
+        return "auth/logout-success";
+    
     }
 }

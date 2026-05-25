@@ -119,9 +119,9 @@ public class WebSecurityConfig {
                 // ── CONFIGURACIÓN DE LOGOUT (NUEVO) ──
                 .logout(logout -> logout
                         .logoutUrl("/logout") // Ruta que interceptará Spring Security
-                        .logoutSuccessUrl("/") // A dónde te redirige tras limpiar la sesión
-                        .invalidateHttpSession(true) // Destruye la sesión (JSESSIONID) del servidor
-                        .deleteCookies("JSESSIONID") // Borra la cookie del navegador
+                        .logoutSuccessUrl("/logout-success")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 );
 

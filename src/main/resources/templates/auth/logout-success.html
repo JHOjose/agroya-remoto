@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cerrando sesión...</title>
+</head>
+<body>
+
+<script>
+
+    sessionStorage.removeItem('token');
+
+    sessionStorage.removeItem('user');
+
+    sessionStorage.removeItem('roles');
+
+    window.location.replace('/');
+
+</script>
+<script>
+    sessionStorage.clear();  // limpia el JWT del navegador
+    window.location.href = '/';
+</script>
+</body>
+</html>
