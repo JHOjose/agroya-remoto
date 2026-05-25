@@ -1,0 +1,157 @@
+:root{
+    --agroya-green:#198754;
+    --agroya-green-dark:#146c43;
+    --agroya-bg:#f5f7f6;
+    --agroya-card:#ffffff;
+    --agroya-border:#e9ecef;
+    --agroya-text:#212529;
+    --agroya-muted:#6c757d;
+}
+
+/* ===== BASE ===== */
+
+body{
+    background:var(--agroya-bg);
+    color:var(--agroya-text);
+    font-family: Inter, system-ui, sans-serif;
+}
+
+/* ===== NAVBAR ===== */
+
+.navbar{
+    backdrop-filter: blur(10px);
+    padding-top:.85rem;
+    padding-bottom:.85rem;
+}
+
+.navbar-brand{
+    font-size:1.2rem;
+    letter-spacing:.2px;
+}
+
+.nav-link{
+    transition:.15s ease;
+    border-radius:.5rem;
+    padding:.45rem .75rem !important;
+}
+
+.nav-link:hover{
+    background:rgba(255,255,255,.12);
+}
+
+/* ===== CARDS ===== */
+
+.card{
+    border:none !important;
+    border-radius:1rem;
+    box-shadow:
+            0 2px 8px rgba(0,0,0,.04),
+            0 12px 24px rgba(0,0,0,.03);
+    overflow:hidden;
+}
+
+.card-header{
+    border-bottom:1px solid var(--agroya-border);
+    background:#fff !important;
+    font-weight:600;
+}
+
+/* ===== BOTONES ===== */
+
+.btn{
+    border-radius:.7rem;
+    font-weight:500;
+    transition:.18s ease;
+}
+
+.btn-success{
+    background:var(--agroya-green);
+    border-color:var(--agroya-green);
+}
+
+.btn-success:hover{
+    background:var(--agroya-green-dark);
+    border-color:var(--agroya-green-dark);
+    transform:translateY(-1px);
+}
+
+/* ===== TABLAS ===== */
+
+.table{
+    margin-bottom:0;
+}
+
+.table thead th{
+    background:#f8f9fa;
+    border-bottom:none;
+    color:#495057;
+    font-size:.85rem;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+
+.table tbody tr{
+    transition:.15s ease;
+}
+
+.table tbody tr:hover{
+    background:#f8faf9;
+}
+
+/* ===== BADGES ===== */
+
+.badge{
+    border-radius:999px;
+    padding:.55em .85em;
+    font-weight:600;
+}
+
+/* ===== LIST GROUP ===== */
+
+.list-group-item{
+    border-color:#f1f3f5;
+}
+
+/* ===== DETALLE PEDIDO ===== */
+
+.pedido-header{
+    background:white;
+    border-radius:1rem;
+    padding:1.4rem;
+    margin-bottom:1.5rem;
+    box-shadow:
+            0 2px 8px rgba(0,0,0,.04),
+            0 12px 24px rgba(0,0,0,.03);
+}
+
+.product-item{
+    transition:.15s ease;
+}
+
+.product-item:hover{
+    background:#fafcfa;
+}
+
+/* ===== PLACEHOLDER ===== */
+
+.placeholder{
+    border-radius:.5rem;
+}
+
+/* ===== ALERTAS ===== */
+
+.alert{
+    border:none;
+    border-radius:1rem;
+}
+
+/* ===== SCROLL ===== */
+
+::-webkit-scrollbar{
+    width:10px;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#ced4da;
+    border-radius:999px;
+}

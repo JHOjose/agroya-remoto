@@ -176,6 +176,7 @@ public class OrderServiceImpl implements OrderService {
                         .id(item.getId())
                         .productoId(item.getProducto().getId())
                         .productoNombre(item.getProducto().getNombre())
+                        .imageUrl(item.getProducto().getImageUrl())
                         .cantidad(item.getCantidad())
                         .precioUnitario(item.getPrecioUnitario())
                         .subtotal(item.getPrecioUnitario().multiply(BigDecimal.valueOf(item.getCantidad())))

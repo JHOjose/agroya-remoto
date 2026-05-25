@@ -1,131 +1,393 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head th:replace="~{fragments/base :: head('Detalle del pedido')}"></head>
+
 <body>
+
 <nav th:replace="~{fragments/base :: navbar}"></nav>
 
-<main class="container py-4" style="max-width:760px;">
-  <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm mb-4">
-    <i class="bi bi-arrow-left me-1"></i>Volver
-  </a>
+<main class="container py-5" style="max-width:950px;">
 
+  <!-- BOTÓN VOLVER -->
+  <div class="mb-4">
+
+    <a href="javascript:history.back()"
+       class="btn btn-light border shadow-sm px-3">
+
+      <i class="bi bi-arrow-left me-1"></i>
+      Volver
+
+    </a>
+
+  </div>
+
+  <!-- ALERTAS -->
   <div id="alertContainer" role="alert" aria-live="polite"></div>
+
+  <!-- SKELETON -->
   <div id="skeleton" class="placeholder-glow">
-    <div class="placeholder col-5 mb-3" style="height:1.8rem;"></div>
-    <div class="placeholder col-12 mb-2"></div>
-    <div class="placeholder col-8"></div>
+
+    <div class="placeholder col-4 mb-3 rounded"
+         style="height:2rem;">
+    </div>
+
+    <div class="placeholder col-8 mb-2 rounded"></div>
+
+    <div class="placeholder col-6 rounded"></div>
+
   </div>
+
+  <!-- CONTENIDO -->
   <div id="contenido" class="d-none">
-    <!-- Encabezado -->
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
-      <div>
-        <h1 class="h4 fw-semibold mb-1">Pedido <span id="pedidoNum"></span></h1>
-        <p class="text-muted small mb-0" id="pedidoFecha"></p>
+
+    <!-- HEADER -->
+    <div class="card border-0 shadow-sm mb-4 overflow-hidden">
+
+      <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+
+          <div>
+
+            <div class="text-muted small mb-2">
+              Pedido realizado
+            </div>
+
+            <h1 class="h3 fw-bold mb-2">
+              Pedido <span id="pedidoNum"></span>
+            </h1>
+
+            <div class="text-muted" id="pedidoFecha"></div>
+
+          </div>
+
+          <div>
+
+            <span id="pedidoEstado"
+                  class="badge px-3 py-2 fs-6 rounded-pill">
+            </span>
+
+          </div>
+
+        </div>
+
       </div>
-      <span id="pedidoEstado" class="badge fs-6"></span>
+
     </div>
 
+    <!-- GRID -->
     <div class="row g-4">
-      <!-- Items -->
-      <div class="col-md-7">
-        <div class="card border-0 shadow-sm">
-          <div class="card-header bg-white fw-semibold py-3">
-            <i class="bi bi-bag me-2 text-success"></i>Productos
+
+      <!-- PRODUCTOS -->
+      <div class="col-lg-7">
+
+        <div class="card border-0 shadow-sm h-100">
+
+          <div class="card-header bg-white py-3 px-4">
+
+            <div class="d-flex align-items-center gap-2 fw-semibold">
+
+              <div class="rounded-circle bg-success bg-opacity-10
+                          d-flex align-items-center justify-content-center"
+                   style="width:38px;height:38px;">
+
+                <i class="bi bi-bag text-success"></i>
+
+              </div>
+
+              Productos del pedido
+
+            </div>
+
           </div>
+
           <ul class="list-group list-group-flush" id="itemsList"></ul>
-          <div class="card-footer bg-white py-3 d-flex justify-content-between">
-            <span class="fw-semibold">Total</span>
-            <span class="fw-bold text-success fs-5" id="pedidoTotal"></span>
+
+          <div class="card-footer bg-white py-4 px-4">
+
+            <div class="d-flex justify-content-between align-items-center">
+
+              <span class="text-muted fw-medium">
+                Total pagado
+              </span>
+
+              <span class="fw-bold text-success fs-4"
+                    id="pedidoTotal">
+              </span>
+
+            </div>
+
           </div>
+
         </div>
+
       </div>
 
-      <!-- Info envío -->
-      <div class="col-md-5">
-        <div class="card border-0 shadow-sm mb-3">
-          <div class="card-header bg-white fw-semibold py-3">
-            <i class="bi bi-geo-alt me-2 text-success"></i>Envío
+      <!-- INFORMACIÓN -->
+      <div class="col-lg-5">
+
+        <!-- ENVÍO -->
+        <div class="card border-0 shadow-sm mb-4">
+
+          <div class="card-header bg-white py-3 px-4">
+
+            <div class="d-flex align-items-center gap-2 fw-semibold">
+
+              <div class="rounded-circle bg-success bg-opacity-10
+                          d-flex align-items-center justify-content-center"
+                   style="width:38px;height:38px;">
+
+                <i class="bi bi-geo-alt text-success"></i>
+
+              </div>
+
+              Información de envío
+
+            </div>
+
           </div>
-          <div class="card-body">
-            <p class="mb-1"><strong>Municipio:</strong> <span id="envMunicipio"></span></p>
-            <p class="mb-0"><strong>Dirección:</strong> <span id="envDireccion"></span></p>
+
+          <div class="card-body px-4 py-4">
+
+            <div class="mb-4">
+
+              <div class="text-muted small mb-1">
+                Municipio
+              </div>
+
+              <div class="fw-semibold fs-6"
+                   id="envMunicipio">
+              </div>
+
+            </div>
+
+            <div>
+
+              <div class="text-muted small mb-1">
+                Dirección
+              </div>
+
+              <div class="fw-semibold"
+                   id="envDireccion">
+              </div>
+
+            </div>
+
           </div>
+
         </div>
 
+        <!-- COMPRADOR -->
         <div class="card border-0 shadow-sm">
-          <div class="card-header bg-white fw-semibold py-3">
-            <i class="bi bi-person me-2 text-success"></i>Comprador
+
+          <div class="card-header bg-white py-3 px-4">
+
+            <div class="d-flex align-items-center gap-2 fw-semibold">
+
+              <div class="rounded-circle bg-success bg-opacity-10
+                          d-flex align-items-center justify-content-center"
+                   style="width:38px;height:38px;">
+
+                <i class="bi bi-person text-success"></i>
+
+              </div>
+
+              Comprador
+
+            </div>
+
           </div>
-          <div class="card-body">
-            <p class="mb-0" id="compradorNombre"></p>
+
+          <div class="card-body px-4 py-4">
+
+            <div class="fw-semibold fs-6"
+                 id="compradorNombre">
+            </div>
+
           </div>
+
         </div>
+
       </div>
+
     </div>
+
   </div>
+
 </main>
 
 <div th:replace="~{fragments/base :: scripts}"></div>
+
 <script>
-const PEDIDO_ID = parseInt(window.location.pathname.split('/').pop());
-if (!getToken()) window.location.href = '/login';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const p = await apiFetch('/api/pedidos/' + PEDIDO_ID);
-    if (!p) return;
-    render(p);
-  } catch(err) {
-    mostrarAlerta('Error al cargar el pedido: ' + err.message);
+  const PEDIDO_ID = parseInt(window.location.pathname.split('/').pop());
+
+  if (!getToken()) {
+
+    window.location.href = '/login';
+
   }
-});
 
-const ESTADO_BADGE = {
-  PENDIENTE: 'bg-warning text-dark',
-  PAGADO:    'bg-info text-dark',
-  ENVIADO:   'bg-primary',
-  ENTREGADO: 'bg-success',
-  CANCELADO: 'bg-danger',
-};
+  document.addEventListener('DOMContentLoaded', async () => {
 
-function render(p) {
-  document.getElementById('skeleton').classList.add('d-none');
-  document.getElementById('contenido').classList.remove('d-none');
-  document.title = 'Pedido #' + p.id + ' | AgroYa';
+    try {
 
-  const fecha = new Date(p.fecha).toLocaleString('es-CO',
-    {day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      const p = await apiFetch('/api/pedidos/' + PEDIDO_ID);
 
-  document.getElementById('pedidoNum').textContent    = '#' + p.id;
-  document.getElementById('pedidoFecha').textContent  = fecha;
-  document.getElementById('envMunicipio').textContent = p.municipioEnvio ?? '—';
-  document.getElementById('envDireccion').textContent = p.direccionEnvio ?? '—';
-  document.getElementById('compradorNombre').textContent = p.compradorNombre ?? '—';
+      if (!p) return;
 
-  const estadoEl = document.getElementById('pedidoEstado');
-  estadoEl.textContent = p.estado;
-  estadoEl.className = 'badge fs-6 ' + (ESTADO_BADGE[p.estado] ?? 'bg-secondary');
+      render(p);
 
-  const total = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(p.total);
-  document.getElementById('pedidoTotal').textContent = total;
+    } catch(err) {
 
-  const itemsList = document.getElementById('itemsList');
-  itemsList.innerHTML = (p.items ?? []).map(item => {
-    const subtotal = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(item.precioUnitario * item.cantidad);
-    return `
-    <li class="list-group-item py-3">
-      <div class="d-flex justify-content-between align-items-start">
-        <div>
-          <div class="fw-medium">${escHtml(item.nombreProducto ?? 'Producto')}</div>
-          <div class="text-muted small">
-            ${item.cantidad} × ${new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(item.precioUnitario)}
+      mostrarAlerta('Error al cargar el pedido: ' + err.message);
+
+    }
+
+  });
+
+  const ESTADO_BADGE = {
+
+    PENDIENTE: 'bg-warning text-dark',
+    PAGADO: 'bg-info text-dark',
+    ENVIADO: 'bg-primary',
+    ENTREGADO: 'bg-success',
+    CANCELADO: 'bg-danger'
+
+  };
+
+  function render(p) {
+
+    document.getElementById('skeleton').classList.add('d-none');
+
+    document.getElementById('contenido').classList.remove('d-none');
+
+    document.title = 'Pedido #' + p.id + ' | AgroYa';
+
+    const fecha = new Date(p.fecha).toLocaleString('es-CO', {
+
+      day:'2-digit',
+      month:'long',
+      year:'numeric',
+      hour:'2-digit',
+      minute:'2-digit'
+
+    });
+
+    document.getElementById('pedidoNum').textContent =
+            '#' + p.id;
+
+    document.getElementById('pedidoFecha').textContent =
+            fecha;
+
+    document.getElementById('envMunicipio').textContent =
+            p.municipioEnvio ?? '—';
+
+    document.getElementById('envDireccion').textContent =
+            p.direccionEnvio ?? '—';
+
+    document.getElementById('compradorNombre').textContent =
+            p.compradorNombre ?? '—';
+
+    const estadoEl = document.getElementById('pedidoEstado');
+
+    estadoEl.textContent = p.estado;
+
+    estadoEl.className =
+            'badge px-3 py-2 fs-6 rounded-pill ' +
+            (ESTADO_BADGE[p.estado] ?? 'bg-secondary');
+
+    const total = new Intl.NumberFormat('es-CO', {
+
+      style:'currency',
+      currency:'COP',
+      maximumFractionDigits:0
+
+    }).format(p.total);
+
+    document.getElementById('pedidoTotal').textContent = total;
+
+    const itemsList = document.getElementById('itemsList');
+
+    itemsList.innerHTML = (p.items ?? []).map(item => {
+
+      const subtotal = new Intl.NumberFormat('es-CO', {
+
+        style:'currency',
+        currency:'COP',
+        maximumFractionDigits:0
+
+      }).format(item.precioUnitario * item.cantidad);
+
+      const precioUnitario = new Intl.NumberFormat('es-CO', {
+
+        style:'currency',
+        currency:'COP',
+        maximumFractionDigits:0
+
+      }).format(item.precioUnitario);
+
+      return `
+
+    <li class="list-group-item py-3 px-4">
+
+      <div class="d-flex justify-content-between align-items-start gap-3">
+
+        <div class="d-flex align-items-start gap-3">
+
+          ${
+              item.imageUrl
+                      ? `
+              <img src="${escHtml(item.imageUrl)}"
+                   alt="${escHtml(item.nombreProducto ?? 'Producto')}"
+                   class="rounded-3 border object-fit-cover flex-shrink-0"
+                   style="width:65px;height:65px;">
+              `
+                      : `
+              <div class="rounded-3 bg-success bg-opacity-10
+                          d-flex align-items-center justify-content-center
+                          flex-shrink-0 border"
+                   style="width:65px;height:65px;">
+
+                <i class="bi bi-box text-success fs-5"></i>
+
+              </div>
+              `
+      }
+
+          <div>
+
+            <div class="fw-semibold mb-1">
+
+              ${escHtml(item.nombreProducto ?? 'Producto')}
+
+            </div>
+
+            <div class="text-muted small">
+
+              ${item.cantidad} × ${precioUnitario}
+
+            </div>
+
           </div>
+
         </div>
-        <div class="fw-semibold">${subtotal}</div>
+
+        <div class="fw-bold text-dark">
+
+          ${subtotal}
+
+        </div>
+
       </div>
+
     </li>`;
-  }).join('');
-}
+
+    }).join('');
+
+  }
+
 </script>
+
 </body>
 </html>
