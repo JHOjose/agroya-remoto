@@ -40,7 +40,11 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = new Order();
         order.setComprador(buyer);
-        order.setMunicipioEnvio(request.getMunicipioEnvio());
+        order.setMunicipioEnvio(
+                request.getMunicipioEnvio()
+                        .trim()
+                        .toUpperCase()
+        );
         order.setDireccionEnvio(request.getDireccionEnvio());
         order.setEstado(Order.OrderStatus.PENDIENTE);
 
@@ -95,7 +99,11 @@ public class OrderServiceImpl implements OrderService {
                             + order.getEstado());
         }
 
-        order.setMunicipioEnvio(request.getMunicipioEnvio());
+        order.setMunicipioEnvio(
+                request.getMunicipioEnvio()
+                        .trim()
+                        .toUpperCase()
+        );
         order.setDireccionEnvio(request.getDireccionEnvio());
         return mapToResponse(orderRepository.save(order));
     }

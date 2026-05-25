@@ -29,8 +29,9 @@
           <label for="filtroMunicipio" class="form-label small fw-medium mb-1">
             Filtrar por municipio
           </label>
-          <input type="text" class="form-control form-control-sm" id="filtroMunicipio"
-                 placeholder="Ej: Neiva, Pitalito...">
+          <select class="form-select form-select-sm" id="filtroMunicipio">
+            <option value="">Seleccione un municipio</option>
+          </select>
         </div>
         <div class="col-md-3">
           <button class="btn btn-primary btn-sm w-100" onclick="filtrarMunicipio()">
@@ -57,11 +58,33 @@
 </main>
 
 <div th:replace="~{fragments/base :: scripts}"></div>
+<script src="/js/municipios.js"></script>
 <script>
 if (!getToken()) window.location.href = '/login';
 
-document.addEventListener('DOMContentLoaded', cargarGrupos);
+document.addEventListener('DOMContentLoaded', () => {
 
+  cargarMunicipios();
+
+  cargarGrupos();
+
+});
+function cargarMunicipios() {
+
+  const select = document.getElementById('filtroMunicipio');
+
+  MUNICIPIOS_HUILA.forEach(municipio => {
+
+    const option = document.createElement('option');
+
+    option.value = municipio;
+    option.textContent = municipio;
+
+    select.appendChild(option);
+
+  });
+
+}
 async function cargarGrupos() {
   const container = document.getElementById('gruposContainer');
   container.innerHTML = `<div class="text-center py-5">
