@@ -78,7 +78,7 @@ public class ProductController {
         );
     }
     @GetMapping("/mis-productos")
-    @PreAuthorize("hasRole('PRODUCTOR')")
+    @PreAuthorize("hasRole('PRODUCTOR') or hasRole('ADMIN')")
     @Operation(summary = "Listar mis productos")
     public ResponseEntity<List<ProductResponse>> getMyProducts(
             Authentication authentication) {

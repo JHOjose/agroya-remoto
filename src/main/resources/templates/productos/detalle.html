@@ -57,16 +57,41 @@
         </button>
       </div>
 
-      <div sec:authorize="hasRole('PRODUCTOR') or hasRole('ADMIN')" id="accionEditor">
+      <!--  admin solo puede eliminar; editar solo el productor dueño -->
+      <!-- Botones solo para PRODUCTOR (solo el dueño puede editar/eliminar) --><!-- PRODUCTOR -->
+      <div sec:authorize="hasRole('PRODUCTOR')" id="accionEditor">
         <div class="d-flex gap-2">
-          <a id="btnEditar" href="#" class="btn btn-outline-primary w-50">
-            <i class="bi bi-pencil me-1"></i>Editar producto
+
+          <a id="btnEditar"
+             href="#"
+             class="btn btn-outline-primary w-50">
+            <i class="bi bi-pencil me-1"></i>
+            Editar producto
           </a>
-          <button id="btnEliminar" class="btn btn-outline-danger w-50">
-            <i class="bi bi-trash me-1"></i>Eliminar
+
+          <button id="btnEliminarProductor"
+                  class="btn btn-outline-danger w-50">
+            <i class="bi bi-trash me-1"></i>
+            Eliminar
           </button>
+
         </div>
       </div>
+
+      <!-- ADMIN -->
+      <div sec:authorize="hasRole('ADMIN')" id="accionAdmin">
+        <div class="d-flex gap-2">
+
+          <button id="btnEliminarAdmin"
+                  class="btn btn-outline-danger w-100">
+            <i class="bi bi-trash me-1"></i>
+            Eliminar producto
+          </button>
+
+        </div>
+      </div>
+
+
 
       <div sec:authorize="isAnonymous()">
         <a th:href="@{/login}" class="btn btn-success btn-lg w-100">
@@ -225,14 +250,27 @@
   });
 
   /* ── Eliminar producto ───────────────────────── */
-  document.getElementById('btnEliminar')?.addEventListener('click', async () => {
-    if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+  const btnEliminar =
+          document.getElementById('btnEliminarProductor') ||
+          document.getElementById('btnEliminarAdmin');
+
+  btnEliminar?.addEventListener('click', async () => {
+
+    if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
     try {
-      await apiFetch('/api/productos/' + PRODUCTO_ID, { method: 'DELETE' });
+
+      await apiFetch('/api/productos/' + PRODUCTO_ID, {
+        method: 'DELETE'
+      });
+
       sessionStorage.setItem('agroya_msg', 'Producto eliminado.');
       window.location.href = '/productos';
     } catch(err) {
       mostrarAlerta('Error al eliminar: ' + err.message);
+
     }
   });
 </script>
