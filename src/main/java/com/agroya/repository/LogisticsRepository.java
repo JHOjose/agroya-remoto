@@ -7,10 +7,21 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface LogisticsRepository extends JpaRepository<LogisticsGroup, Long> {
-    
-    /**
-     * Busca grupos de logística por municipio utilizando una consulta optimizada.
-     */
-    @Query(value = "SELECT * FROM logistica_agrupada l WHERE l.municipio = :municipio AND l.estado = 'PROGRAMADO' ORDER BY l.fecha_programada ASC", nativeQuery = true)
+
+    // Todos los grupos por estado (para listar PROGRAMADO, EN_TRANSITO, etc.)
+    List<LogisticsGroup> findByEstadoOrderByFechaProgramadaAsc(
+            LogisticsGroup.LogisticsStatus estado);
+
+    // Todos los grupos activos (no completados ni cancelados)
+    @Query("SELECT l FROM LogisticsGroup l WHERE l.estado IN ('PROGRAMADO','EN_TRANSITO') " +
+            "ORDER BY l.fechaProgramada ASC")
+    List<LogisticsGroup> findAllActive();
+
+    // ¿Ya existe un grupo PROGRAMADO para este municipio?
+    boolean existsByMunicipioAndEstado(String municipio, LogisticsGroup.LogisticsStatus estado);
+
+    // Busca grupos por municipio (ya existía, mejorada)
+    @Query("SELECT l FROM LogisticsGroup l WHERE l.municipio = :municipio " +
+            "AND l.estado = 'PROGRAMADO' ORDER BY l.fechaProgramada ASC")
     List<LogisticsGroup> findOptimizedByMunicipio(@Param("municipio") String municipio);
 }
