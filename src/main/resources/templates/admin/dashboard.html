@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="es">
+
+<head th:replace="~{fragments/base :: head('Panel de administración')}"></head>
+
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<main class="container py-4">
+
+    <h1 class="h4 fw-semibold mb-4" th:text="#{admin.title}">Panel de administración</h1>
+
+    <div id="alertContainer" role="alert" aria-live="polite"></div>
+
+    <!-- Tarjetas de resumen -->
+    <div class="row g-3 mb-4" id="statsRow">
+        <!-- Se llenan desde JS -->
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 placeholder-glow">
+                <div class="placeholder col-6 mx-auto mb-2" style="height:2rem;"></div>
+                <p class="text-muted small mb-0 placeholder col-8 mx-auto"></p>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm text-center p-3 placeholder-glow">
+                <div class="placeholder col-6 mx-auto mb-2" style="height:2rem;"></div>
+                <p class="text-muted small mb-0 placeholder col-8 mx-auto"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ── Logística agrupada ── -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white fw-semibold border-0 pt-3">
+                    <i class="bi bi-truck me-2 text-success" aria-hidden="true"></i>
+                    <span th:text="#{admin.logistics}">Logística agrupada por municipio</span>
+                </div>
+                <div class="card-body" id="logisticaContainer">
+                    <div class="d-flex justify-content-center py-4">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Reportes ── -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white fw-semibold border-0 pt-3">
+                    <i class="bi bi-file-earmark-pdf me-2 text-danger" aria-hidden="true"></i>
+                    <span th:text="#{admin.reports}">Reportes</span>
+                </div>
+                <div class="card-body d-flex flex-column gap-3">
+
+                    <!-- Reporte inventario -->
+                    <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                        <i class="bi bi-boxes text-success fs-3" aria-hidden="true"></i>
+                        <div class="flex-grow-1">
+                            <p class="mb-0 fw-medium" th:text="#{admin.report.inventory}">
+                                Inventario de productos
+                            </p>
+                            <p class="mb-0 text-muted small" th:text="#{admin.report.inventory.desc}">
+                                Stock, precios y categorías actuales
+                            </p>
+                        </div>
+                        <a th:href="@{/api/reportes/inventario}"
+                           class="btn btn-outline-danger btn-sm flex-shrink-0"
+                           target="_blank"
+                           th:attr="aria-label=#{admin.report.download}"
+                           id="btnReporte">
+                            <span class="spinner-border spinner-border-sm d-none me-1"
+                                  id="reporteSpinner" aria-hidden="true"></span>
+                            <i class="bi bi-download me-1" aria-hidden="true"></i>
+                            <span th:text="#{admin.report.download}">Descargar PDF</span>
+                        </a>
+                    </div>
+
+                    <!-- Placeholder para futuros reportes -->
+                    <div class="d-flex align-items-center gap-3 p-3 border rounded opacity-50">
+                        <i class="bi bi-graph-up text-primary fs-3" aria-hidden="true"></i>
+                        <div>
+                            <p class="mb-0 fw-medium">Ventas por municipio</p>
+                            <p class="mb-0 text-muted small">Próximamente</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div th:replace="~{fragments/base :: scripts}"></div>
+
+<script>
+/* Verificar sesión y rol admin */
+if (!getToken()) window.location.href = '/login';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    cargarEstadisticas();
+    cargarLogistica();
+});
+
+async function cargarEstadisticas() {
+    try {
+        const [productos, pedidos] = await Promise.all([
+            apiFetch('/api/productos'),
+            apiFetch('/api/pedidos/mis-pedidos').catch(() => []),
+        ]);
+
+        document.getElementById('statsRow').innerHTML = `
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <h2 class="h2 fw-bold text-success mb-0">${productos?.length ?? '—'}</h2>
+                    <p class="text-muted small mb-0">Productos</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="card border-0 shadow-sm text-center p-3">
+                    <h2 class="h2 fw-bold text-primary mb-0">${pedidos?.length ?? '—'}</h2>
+                    <p class="text-muted small mb-0">Pedidos</p>
+                </div>
+            </div>`;
+    } catch (_) { /* silencioso */ }
+}
+
+async function cargarLogistica() {
+    const container = document.getElementById('logisticaContainer');
+    try {
+        const grupos = await apiFetch('/api/logistica/agrupar');
+        if (!grupos || grupos.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>
+                    No hay pedidos pendientes por agrupar.
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = grupos.map(g => `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h6 mb-0 fw-semibold">
+                        <i class="bi bi-geo-alt-fill text-success me-1" aria-hidden="true"></i>
+                        ${escHtml(g.municipio)}
+                    </h2>
+                    <span class="badge bg-success">${g.totalPedidos} pedido(s)</span>
+                </div>
+                <ul class="list-group list-group-flush small">
+                    ${g.pedidos.map(p => `
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <span>${escHtml(p.compradorNombre)} — ${escHtml(p.direccionEnvio || '')}</span>
+                            <span class="fw-medium text-success">
+                                ${new Intl.NumberFormat('es-CO', {
+                                    style: 'currency', currency: 'COP',
+                                    maximumFractionDigits: 0
+                                }).format(p.total)}
+                            </span>
+                        </li>`).join('')}
+                </ul>
+            </div>
+            <hr>`
+        ).join('');
+
+    } catch (err) {
+        container.innerHTML = `<p class="text-muted small">Error al cargar: ${err.message}</p>`;
+    }
+}
+
+/* Descarga del reporte con spinner */
+document.getElementById('btnReporte').addEventListener('click', function () {
+    const spinner = document.getElementById('reporteSpinner');
+    spinner.classList.remove('d-none');
+    setTimeout(() => spinner.classList.add('d-none'), 3000);
+});
+
+function escHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+
+</body>
+</html>

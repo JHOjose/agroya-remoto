@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments/base :: head('Iniciar sesión')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<main class="container py-5" style="max-width:460px;">
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4 p-md-5">
+      <div class="text-center mb-4">
+        <i class="bi bi-leaf-fill text-success fs-1" aria-hidden="true"></i>
+        <h1 class="h4 mt-2 mb-0 fw-semibold">Iniciar sesión</h1>
+        <p class="text-muted small mt-1">Accede a tu cuenta AgroYa</p>
+      </div>
+
+      <div id="alertContainer" role="alert" aria-live="polite"></div>
+
+      <form id="loginForm" novalidate>
+        <div class="mb-3">
+          <label for="email" class="form-label fw-medium">Correo electrónico</label>
+          <input type="email" class="form-control" id="email" required
+                 autocomplete="email" placeholder="ejemplo@correo.com">
+          <div class="invalid-feedback">Ingresa tu correo.</div>
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label fw-medium">Contraseña</label>
+          <div class="input-group">
+            <input type="password" class="form-control" id="password" required
+                   autocomplete="current-password" placeholder="Tu contraseña">
+            <button class="btn btn-outline-secondary" type="button" id="togglePwd"
+                    aria-label="Mostrar contraseña">
+              <i class="bi bi-eye" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="invalid-feedback">Ingresa tu contraseña.</div>
+        </div>
+        <div class="d-grid mt-4">
+          <button type="submit" class="btn btn-success btn-lg" id="btnLogin">
+            <span class="spinner-border spinner-border-sm d-none me-2"
+                  id="loginSpinner" role="status" aria-hidden="true"></span>
+            Iniciar sesión
+          </button>
+        </div>
+      </form>
+
+      <hr class="my-4">
+      <p class="text-center mb-0 small">
+        ¿No tienes cuenta?
+        <a th:href="@{/register}" class="text-success fw-medium">Regístrate</a>
+      </p>
+    </div>
+  </div>
+</main>
+
+<div th:replace="~{fragments/base :: scripts}"></div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    /*
+     * FIX BUG PARPADEO:
+     * Spring /logout invalida la sesión del servidor pero el sessionStorage del
+     * navegador sigue teniendo el token viejo. Al llegar a /login lo limpiamos
+     * SIEMPRE — si hubiera un token válido activo, el servidor ya lo hubiera
+     * redirigido antes de llegar aquí via AuthViewController.
+     */
+    sessionStorage.clear();
+
+    const msg = sessionStorage.getItem('agroya_msg');
+    if (msg) { mostrarAlerta(msg, 'success'); sessionStorage.removeItem('agroya_msg'); }
+  });
+
+  document.getElementById('togglePwd').addEventListener('click', function() {
+    const inp = document.getElementById('password');
+    const ico = this.querySelector('i');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    ico.className = inp.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!this.checkValidity()) { this.classList.add('was-validated'); return; }
+
+    const btn = document.getElementById('btnLogin');
+    const sp  = document.getElementById('loginSpinner');
+    btn.disabled = true; sp.classList.remove('d-none');
+
+    try {
+      const data = await apiFetch('/api/auth/signin', {
+        method: 'POST',
+        body: JSON.stringify({
+          email:    document.getElementById('email').value.trim(),
+          password: document.getElementById('password').value,
+        }),
+      });
+      if (!data) return;
+
+      setToken(data.token);
+      sessionStorage.setItem('agroya_roles', JSON.stringify(data.roles ?? []));
+      sessionStorage.setItem('agroya_user',  data.email ?? '');
+
+      const roles = data.roles ?? [];
+      if      (roles.includes('ROLE_ADMIN'))     window.location.href = '/admin';
+      else if (roles.includes('ROLE_PRODUCTOR')) window.location.href = '/mis-productos';
+      else                                       window.location.href = '/productos';
+
+    } catch(err) {
+      mostrarAlerta('Correo o contraseña incorrectos.');
+    } finally {
+      btn.disabled = false; sp.classList.add('d-none');
+    }
+  });
+</script>
+</body>
+</html>

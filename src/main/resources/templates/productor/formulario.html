@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments/base :: head('Producto')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<main class="container py-4" style="max-width:680px;">
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a th:href="@{/mis-productos}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h1 class="h4 mb-0 fw-semibold" id="tituloFormulario">Añadir producto</h1>
+  </div>
+
+  <div id="alertContainer" role="alert" aria-live="polite"></div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      <form id="productoForm" novalidate>
+
+        <div class="mb-3">
+          <label for="nombre" class="form-label fw-medium">Nombre del producto *</label>
+          <input type="text" class="form-control" id="nombre" required
+                 placeholder="Ej: Tomate chonto">
+          <div class="invalid-feedback">Requerido.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="descripcion" class="form-label fw-medium">Descripción</label>
+          <textarea class="form-control" id="descripcion" rows="3"
+                    placeholder="Describe tu producto, calidad, proceso de cultivo..."></textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-5">
+            <label for="precio" class="form-label fw-medium">Precio (COP) *</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="text" class="form-control" id="precio"
+                     required placeholder="Ej: 2500">
+            </div>
+            <div class="invalid-feedback">Ingresa un precio válido.</div>
+          </div>
+          <div class="col-md-4">
+            <label for="stock" class="form-label fw-medium">Stock *</label>
+            <input type="number" class="form-control" id="stock"
+                   required min="0" placeholder="0">
+            <div class="invalid-feedback">Requerido.</div>
+          </div>
+          <div class="col-md-3">
+            <label for="unidad" class="form-label fw-medium">Unidad</label>
+            <select class="form-select" id="unidad">
+              <option value="kg">kg</option>
+              <option value="lb">lb</option>
+              <option value="unidad">unidad</option>
+              <option value="bulto">bulto</option>
+              <option value="caja">caja</option>
+              <option value="litro">litro</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Categoría: se carga DESDE LA BD vía /api/categorias -->
+        <div class="mb-3">
+          <label for="categoriaId" class="form-label fw-medium">Categoría *</label>
+          <select class="form-select" id="categoriaId" required>
+            <option value="">Cargando categorías...</option>
+          </select>
+          <div class="invalid-feedback">Selecciona una categoría.</div>
+          <!-- Indicador de error si falla la carga -->
+          <div id="categoriaError" class="text-danger small mt-1 d-none">
+            ⚠️ No se pudieron cargar las categorías. Reinicia la aplicación.
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="imageUrl" class="form-label fw-medium">URL de imagen</label>
+          <input type="url" class="form-control" id="imageUrl"
+                 placeholder="https://ejemplo.com/imagen.jpg">
+          <div class="form-text">Opcional. URL de una imagen representativa.</div>
+        </div>
+
+        <!-- Preview de imagen en tiempo real -->
+        <div id="imgPreviewContainer" class="mb-4 d-none">
+          <p class="small fw-medium mb-1 text-muted">Vista previa:</p>
+          <img id="imgPreview" src="" alt="Preview"
+               class="rounded-3 border" style="max-height:200px;max-width:100%;object-fit:cover;">
+        </div>
+
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-success px-4" id="btnGuardar">
+            <span class="spinner-border spinner-border-sm d-none me-2"
+                  id="guardSpinner" role="status" aria-hidden="true"></span>
+            <span id="btnTexto">Guardar producto</span>
+          </button>
+          <a th:href="@{/mis-productos}" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<div th:replace="~{fragments/base :: scripts}"></div>
+<script th:inline="javascript">
+  const PRODUCTO_ID  = /*[[${productoId}]]*/ null;
+  const MODO_EDICION = /*[[${modoEdicion}]]*/ false;
+
+  if (!getToken()) window.location.href = '/login';
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (MODO_EDICION) {
+      document.getElementById('tituloFormulario').textContent = 'Editar producto';
+      document.getElementById('btnTexto').textContent = 'Actualizar producto';
+    }
+
+    // 1. Cargar categorías DESDE LA BD primero
+    await cargarCategorias();
+
+    // 2. Si es edición, cargar datos del producto (ya con categorías listas)
+    if (MODO_EDICION && PRODUCTO_ID) await cargarProducto();
+  });
+
+  /**
+   * Carga categorías desde GET /api/categorias (BD real).
+   * Si falla, muestra error claro — no usa lista quemada
+   * para evitar IDs que no coincidan con la BD.
+   */
+  async function cargarCategorias() {
+    const select = document.getElementById('categoriaId');
+    const errorDiv = document.getElementById('categoriaError');
+
+    try {
+      // Categorías públicas — no necesita token
+      const res = await fetch('/api/categorias');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const categorias = await res.json();
+
+      select.innerHTML = '<option value="">Selecciona una categoría...</option>';
+      categorias.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value       = c.id;
+        opt.textContent = c.name ?? c.nombre;
+        select.appendChild(opt);
+      });
+
+      if (categorias.length === 0) {
+        select.innerHTML = '<option value="">Sin categorías en BD — reinicia la app</option>';
+        errorDiv.classList.remove('d-none');
+      }
+    } catch(err) {
+      select.innerHTML = '<option value="">Error al cargar — ver consola</option>';
+      errorDiv.classList.remove('d-none');
+      console.error('Error cargando categorías:', err);
+    }
+  }
+
+  async function cargarProducto() {
+    try {
+      const p = await apiFetch('/api/productos/' + PRODUCTO_ID);
+      if (!p) return;
+      document.getElementById('nombre').value      = p.nombre ?? '';
+      document.getElementById('descripcion').value = p.descripcion ?? '';
+      document.getElementById('precio').value      = p.precio ?? '';
+      document.getElementById('stock').value       = p.stock ?? '';
+      document.getElementById('unidad').value      = p.unidad ?? 'kg';
+      document.getElementById('imageUrl').value    = p.imageUrl ?? '';
+
+      // Seleccionar la categoría correcta — buscar por nombre si no hay categoriaId
+      const select = document.getElementById('categoriaId');
+      const opts = Array.from(select.options);
+      // Intentar por nombre (ProductResponse devuelve categoriaNombre, no id)
+      const match = opts.find(o => o.textContent.trim() === (p.categoriaNombre ?? ''));
+      if (match) match.selected = true;
+
+      if (p.imageUrl) mostrarPreview(p.imageUrl);
+    } catch(err) {
+      mostrarAlerta('No se pudo cargar el producto: ' + err.message);
+    }
+  }
+
+  // Preview imagen en tiempo real
+  document.getElementById('imageUrl').addEventListener('input', function() {
+    mostrarPreview(this.value.trim());
+  });
+  function mostrarPreview(url) {
+    const c = document.getElementById('imgPreviewContainer');
+    const i = document.getElementById('imgPreview');
+    if (url) { i.src = url; c.classList.remove('d-none'); }
+    else     { c.classList.add('d-none'); }
+  }
+
+  document.getElementById('productoForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!this.checkValidity()) { this.classList.add('was-validated'); return; }
+
+    const catId = parseInt(document.getElementById('categoriaId').value);
+    if (!catId) {
+      document.getElementById('categoriaId').classList.add('is-invalid');
+      return;
+    }
+
+    const btn = document.getElementById('btnGuardar');
+    const sp  = document.getElementById('guardSpinner');
+    btn.disabled = true; sp.classList.remove('d-none');
+
+    // --- INICIO DEL ESCUDO ---
+    // 1. Obtenemos lo que escribió el usuario tal cual
+    const precioTexto = document.getElementById('precio').value.trim();
+
+    // 2. Reemplazamos la coma por un punto para que JS y Spring Boot lo entiendan
+    // Ej: "2500,50" se convierte en "2500.50"
+    const precioNumerico = parseFloat(precioTexto.replace(',', '.'));
+    // --- FIN DEL ESCUDO ---
+
+    const payload = {
+      nombre:      document.getElementById('nombre').value.trim(),
+      descripcion: document.getElementById('descripcion').value.trim(),
+      precio:      precioNumerico, // <-- Usamos la variable ya limpia
+      stock:       parseFloat(document.getElementById('stock').value),
+      unidad:      document.getElementById('unidad').value,
+      categoriaId: catId,
+      imageUrl:    document.getElementById('imageUrl').value.trim() || null,
+    };
+    try {
+      if (MODO_EDICION && PRODUCTO_ID) {
+        await apiFetch('/api/productos/' + PRODUCTO_ID, { method:'PUT', body:JSON.stringify(payload) });
+        sessionStorage.setItem('agroya_msg', ' Producto actualizado correctamente.');
+      } else {
+        await apiFetch('/api/productos', { method:'POST', body:JSON.stringify(payload) });
+        sessionStorage.setItem('agroya_msg', ' Producto creado correctamente.');
+      }
+      window.location.href = '/mis-productos';
+    } catch(err) {
+      mostrarAlerta('Error al guardar: ' + err.message);
+      btn.disabled = false; sp.classList.add('d-none');
+    }
+  });
+</script>
+</body>
+</html>

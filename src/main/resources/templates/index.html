@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="es">
+
+<!-- ═══════════════════════════════════════════════════════
+     AgroYa — Página principal
+     USA el fragmento base.html para navbar, CSS y scripts.
+     Todos los links van a rutas reales de Spring MVC.
+═══════════════════════════════════════════════════════ -->
+
+<head th:replace="~{fragments/base :: head('Inicio')}"></head>
+
+<body class="d-flex flex-column min-vh-100">
+
+<!-- Navbar reutilizable (tiene todos los links correctos) -->
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<!-- ── HERO ──────────────────────────────────────────── -->
+<header class="bg-success bg-gradient text-white py-5">
+    <div class="container py-3 text-center">
+    <span class="badge bg-white text-success mb-3 px-3 py-2 rounded-pill fw-semibold">
+      🌱 Plataforma académica USCO 2026
+    </span>
+        <h1 class="display-5 fw-bold mb-3" th:text="#{app.welcome}">
+            ¡Bienvenido a AgroYa!
+        </h1>
+        <p class="lead mb-4 opacity-90 mx-auto" style="max-width:560px;"
+           th:text="#{app.description}">
+            Conectamos productores rurales con compradores directamente,
+            eliminando intermediarios y reduciendo costos de transporte.
+        </p>
+
+        <!-- ★ BOTONES CON LINKS REALES ★ -->
+        <div class="d-flex flex-wrap gap-3 justify-content-center">
+            <a th:href="@{/productos}"
+               class="btn btn-light btn-lg px-4 fw-semibold text-success shadow-sm">
+                <i class="bi bi-basket3-fill me-2" aria-hidden="true"></i>
+                <span th:text="#{nav.products}">Ver Productos</span>
+            </a>
+            <a th:href="@{/register}"
+               class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                <i class="bi bi-person-plus me-2" aria-hidden="true"></i>
+                <span th:text="#{nav.register}">Registrarse gratis</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- ── CARACTERÍSTICAS ───────────────────────────────── -->
+<section class="container py-5">
+    <div class="row g-4 text-center">
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="mb-3">
+          <span class="bg-success bg-opacity-10 p-3 rounded-circle d-inline-block">
+            <i class="bi bi-tree-fill text-success fs-3" aria-hidden="true"></i>
+          </span>
+                </div>
+                <h2 class="h5 fw-semibold">¿Qué es AgroYa?</h2>
+                <p class="text-muted small">
+                    Una plataforma que facilita el comercio justo entre productores
+                    locales del Huila y compradores finales, sin intermediarios.
+                </p>
+                <!-- Link al catálogo desde la tarjeta -->
+                <a th:href="@{/productos}" class="btn btn-outline-success btn-sm mt-auto">
+                    Explorar catálogo
+                </a>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="mb-3">
+          <span class="bg-primary bg-opacity-10 p-3 rounded-circle d-inline-block">
+            <i class="bi bi-truck text-primary fs-3" aria-hidden="true"></i>
+          </span>
+                </div>
+                <h2 class="h5 fw-semibold" th:text="#{nav.logistics}">Logística Compartida</h2>
+                <p class="text-muted small">
+                    Varios productores coordinan el transporte de sus productos
+                    hacia el mismo municipio, reduciendo costos para todos.
+                </p>
+                <!-- Solo admins ven el link a logística -->
+                <a sec:authorize="hasRole('ADMIN')"
+                   th:href="@{/admin/logistica}"
+                   class="btn btn-outline-primary btn-sm mt-auto">
+                    Ver agrupaciones
+                </a>
+                <span sec:authorize="isAnonymous()"
+                      class="text-muted small mt-auto d-block">
+          <a th:href="@{/login}" class="text-success">Inicia sesión</a> para acceder
+        </span>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4">
+                <div class="mb-3">
+          <span class="bg-warning bg-opacity-10 p-3 rounded-circle d-inline-block">
+            <i class="bi bi-shield-lock-fill text-warning fs-3" aria-hidden="true"></i>
+          </span>
+                </div>
+                <h2 class="h5 fw-semibold">Seguridad</h2>
+                <p class="text-muted small">
+                    Autenticación JWT, contraseñas cifradas con BCrypt,
+                    roles diferenciados y comunicación HTTPS.
+                </p>
+                <a th:href="@{/swagger-ui.html}" target="_blank"
+                   class="btn btn-outline-warning btn-sm mt-auto text-dark">
+                    Ver API (Swagger)
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── LLAMADA A ACCIÓN (solo anónimos) ──────────────── -->
+<section class="bg-light border-top py-5 mt-auto" sec:authorize="isAnonymous()">
+    <div class="container text-center">
+        <h2 class="h4 fw-semibold mb-2">¿Listo para empezar?</h2>
+        <p class="text-muted mb-4">
+            Crea tu cuenta en segundos — es gratis y sin tarjeta de crédito.
+        </p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a th:href="@{/register}" class="btn btn-success px-4">
+                <i class="bi bi-person-plus me-2" aria-hidden="true"></i>
+                Crear cuenta
+            </a>
+            <a th:href="@{/login}" class="btn btn-outline-secondary px-4">
+                Ya tengo cuenta
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── BIENVENIDA AL USUARIO AUTENTICADO ─────────────── -->
+<section class="bg-success bg-opacity-10 border-top py-4" sec:authorize="isAuthenticated()">
+    <div class="container d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div>
+            <p class="mb-0 fw-medium">
+                <i class="bi bi-person-check-fill text-success me-2" aria-hidden="true"></i>
+                Hola, <strong sec:authentication="name">Usuario</strong> 👋
+            </p>
+            <p class="mb-0 text-muted small">¿Qué quieres hacer hoy?</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a th:href="@{/productos}" class="btn btn-success btn-sm">
+                <i class="bi bi-basket3 me-1" aria-hidden="true"></i>Ver productos
+            </a>
+            <a sec:authorize="hasRole('COMPRADOR')"
+               th:href="@{/pedidos/mis-pedidos}"
+               class="btn btn-outline-success btn-sm">
+                <i class="bi bi-bag-check me-1" aria-hidden="true"></i>Mis pedidos
+            </a>
+            <a sec:authorize="hasRole('ADMIN')"
+               th:href="@{/admin}"
+               class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-speedometer2 me-1" aria-hidden="true"></i>Panel admin
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────────── -->
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container text-center">
+        <p class="mb-1 small opacity-75" th:text="#{footer.rights}">
+            © 2026 AgroYa — Todos los derechos reservados
+        </p>
+        <p class="mb-0 small opacity-50">
+            Proyecto académico · Universidad Surcolombiana · Ingeniería de Sistemas
+        </p>
+    </div>
+</footer>
+
+<!-- Scripts (Bootstrap JS + helpers apiFetch, logout, etc.) -->
+<div th:replace="~{fragments/base :: scripts}"></div>
+
+<script>
+    /* Si el usuario acaba de registrarse, mostrar mensaje de bienvenida */
+    document.addEventListener('DOMContentLoaded', () => {
+        const msg = sessionStorage.getItem('agroya_msg');
+        if (msg) {
+            mostrarAlerta(msg, 'success');
+            sessionStorage.removeItem('agroya_msg');
+        }
+    });
+</script>
+
+</body>
+</html>

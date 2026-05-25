@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- ══════════════════════════════════════════════════
+     FRAGMENTOS REUTILIZABLES DE AGROYA
+     Uso en cualquier template:
+       <head th:replace="~{fragments/base :: head('Título')}">
+       <nav  th:replace="~{fragments/base :: navbar}">
+       <div  th:replace="~{fragments/base :: scripts}">
+══════════════════════════════════════════════════ -->
+
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${titulo} + ' | AgroYa'">AgroYa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+          crossorigin="anonymous">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root { --agroya-green: #198754; }
+        body  { background: #f8f9fa; }
+        :focus-visible { outline: 3px solid var(--agroya-green); outline-offset: 2px; }
+        .card-producto { transition: transform .15s, box-shadow .15s; }
+        .card-producto:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
+        .spinner-overlay {
+            position: fixed; inset: 0; background: rgba(255,255,255,.8);
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+    </style>
+</head>
+
+<!-- ══ FRAGMENTO: navbar ══════════════════════════════ -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-semibold" th:href="@{/}">
+            <i class="bi bi-leaf-fill" aria-hidden="true"></i>AgroYa
+        </a>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navMain"
+                aria-controls="navMain" aria-expanded="false" aria-label="Abrir menú">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navMain">
+            <!-- Links izquierda -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/}" th:text="#{nav.home}">Inicio</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/productos}" th:text="#{nav.products}">Productos</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/admin/logistica}" th:text="#{nav.logistics}">Logística</a>
+                </li>
+                <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                    <a class="nav-link" th:href="@{/admin}" th:text="#{nav.admin}">Admin</a>
+                </li>
+            </ul>
+
+            <!-- Links derecha -->
+            <ul class="navbar-nav align-items-lg-center gap-lg-1">
+
+                <!-- Selector de idioma -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button"
+                       data-bs-toggle="dropdown" aria-expanded="false"
+                       th:text="#{lang.change}">Idioma</a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item"
+                               th:href="@{/(lang=es)}"
+                               th:classappend="${#locale.language=='es'}?'active'"
+                               th:text="#{lang.es}">Español</a></li>
+                        <li><a class="dropdown-item"
+                               th:href="@{/(lang=en)}"
+                               th:classappend="${#locale.language=='en'}?'active'"
+                               th:text="#{lang.en}">Inglés</a></li>
+                        <li><a class="dropdown-item"
+                               th:href="@{/(lang=fr)}"
+                               th:classappend="${#locale.language=='fr'}?'active'"
+                               th:text="#{lang.fr}">Francés</a></li>
+                    </ul>
+                </li>
+
+                <!-- Mis pedidos (comprador) -->
+                <li class="nav-item" sec:authorize="hasRole('COMPRADOR')">
+                    <a class="nav-link" th:href="@{/pedidos/mis-pedidos}">
+                        <i class="bi bi-bag-check me-1" aria-hidden="true"></i>
+                        <span th:text="#{nav.myorders}">Mis pedidos</span>
+                    </a>
+                </li>
+
+                <!-- Añadir producto (productor) -->
+                <li class="nav-item" sec:authorize="hasRole('PRODUCTOR')">
+                    <a class="nav-link" th:href="@{/productos/nuevo}">
+                        <i class="bi bi-plus-square me-1" aria-hidden="true"></i>
+                        Añadir producto
+                    </a>
+                </li>
+
+                <!-- Anónimo: login + registro -->
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="nav-link" th:href="@{/login}" th:text="#{nav.login}">Iniciar sesión</a>
+                </li>
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="btn btn-outline-light btn-sm px-3"
+                       th:href="@{/register}" th:text="#{nav.register}">Registrarse</a>
+                </li>
+
+                <!-- Autenticado: menú de usuario -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-1"
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-5" aria-hidden="true"></i>
+                        <span sec:authentication="name">Usuario</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li sec:authorize="hasRole('COMPRADOR')">
+                            <a class="dropdown-item" th:href="@{/pedidos/mis-pedidos}">
+                                <i class="bi bi-bag-check me-2"></i>Mis pedidos
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('PRODUCTOR')">
+                            <a class="dropdown-item" th:href="@{/productos/nuevo}">
+                                <i class="bi bi-plus-square me-2"></i>Añadir producto
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <a class="dropdown-item" th:href="@{/admin}">
+                                <i class="bi bi-speedometer2 me-2"></i>Panel admin
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <!--
+                              ★ LOGOUT CORRECTO ★
+                              NO usa JS para borrar sessionStorage (eso ya no importa).
+                              Navega a /logout → Spring Security invalida la sesión del SERVIDOR
+                              y borra la cookie JSESSIONID → el navbar queda 100% limpio.
+                            -->
+                            <a class="dropdown-item text-danger" th:href="@{/logout}">
+                                <i class="bi bi-box-arrow-right me-2"></i>
+                                <span th:text="#{nav.logout}">Cerrar sesión</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ══ FRAGMENTO: scripts ════════════════════════════ -->
+<div th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+            crossorigin="anonymous"></script>
+    <script>
+        const TOKEN_KEY = 'agroya_jwt';
+        function getToken()    { return sessionStorage.getItem(TOKEN_KEY); }
+        function setToken(t)   { sessionStorage.setItem(TOKEN_KEY, t); }
+        function removeToken() { sessionStorage.removeItem(TOKEN_KEY); }
+
+        /**
+         * ★ logout() DEFINITIVO ★
+         *
+         * El problema anterior: JS borraba sessionStorage pero la cookie JSESSIONID
+         * seguía viva en el servidor → Thymeleaf/sec:authorize veía usuario "fantasma".
+         *
+         * Solución: simplemente navegar a /logout.
+         * Spring Security se encarga de TODO en el servidor:
+         *   - Invalida la HttpSession (y con ella el JWT que guardamos en sesión)
+         *   - Borra la cookie JSESSIONID del navegador
+         *   - Limpia el SecurityContext
+         *   - Redirige a '/' donde el servidor ahora sí ve usuario anónimo
+         *
+         * sessionStorage.clear() es opcional (buena higiene) pero ya no es
+         * lo que determina el estado del navbar.
+         */
+        function logout() {
+            sessionStorage.clear();                 // limpieza local (opcional)
+            window.location.href = '/logout';       // Spring hace el trabajo real
+        }
+
+        /** Cabeceras para fetch() autenticado — sigue funcionando para la API REST */
+        function authHeaders() {
+            const h = { 'Content-Type': 'application/json' };
+            const t = getToken();
+            if (t) h['Authorization'] = 'Bearer ' + t;
+            return h;
+        }
+
+        async function apiFetch(url, opts = {}) {
+            const res = await fetch(url, { headers: authHeaders(), ...opts });
+            if (res.status === 401) {
+                sessionStorage.clear();
+                window.location.href = '/logout';   // también limpia sesión del servidor
+                return null;
+            }
+            if (!res.ok) {
+                let msg = res.statusText;
+                try { const b = await res.json(); msg = b.message || msg; } catch(_) {}
+                throw new Error(msg);
+            }
+            return res.status === 204 ? null : res.json();
+        }
+
+        function mostrarAlerta(msg, tipo = 'danger') {
+            const c = document.getElementById('alertContainer');
+            if (!c) return;
+            c.innerHTML = `
+        <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+          ${msg}
+          <button type="button" class="btn-close"
+                  data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>`;
+        }
+
+        function mostrarSpinner() {
+            let s = document.getElementById('_gSpinner');
+            if (!s) {
+                s = document.createElement('div');
+                s.id = '_gSpinner'; s.className = 'spinner-overlay';
+                s.setAttribute('role','status'); s.setAttribute('aria-label','Cargando');
+                s.innerHTML = '<div class="spinner-border text-success" style="width:3rem;height:3rem;"></div>';
+                document.body.appendChild(s);
+            }
+            s.style.display = 'flex';
+        }
+        function ocultarSpinner() {
+            const s = document.getElementById('_gSpinner');
+            if (s) s.style.display = 'none';
+        }
+
+        function escHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    </script>
+</div>
+
+</html>

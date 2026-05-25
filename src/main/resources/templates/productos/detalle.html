@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="es">
+<head th:replace="~{fragments/base :: head('Detalle del producto')}"></head>
+<body>
+<nav th:replace="~{fragments/base :: navbar}"></nav>
+
+<main class="container py-4">
+  <a th:href="@{/productos}" class="btn btn-outline-secondary btn-sm mb-4">
+    <i class="bi bi-arrow-left me-1"></i>Volver al catálogo
+  </a>
+
+  <div id="alertContainer" role="alert" aria-live="polite"></div>
+
+  <!-- Skeleton mientras carga -->
+  <div id="skeleton" class="row g-4">
+    <div class="col-md-5 placeholder-glow">
+      <div class="placeholder rounded-3" style="height:340px;width:100%;"></div>
+    </div>
+    <div class="col-md-7 placeholder-glow d-flex flex-column gap-3 pt-2">
+      <div class="placeholder col-8" style="height:2rem;"></div>
+      <div class="placeholder col-4"></div>
+      <div class="placeholder col-6" style="height:2.5rem;"></div>
+      <div class="placeholder col-12"></div>
+      <div class="placeholder col-10"></div>
+    </div>
+  </div>
+
+  <!-- Contenido real -->
+  <div id="contenido" class="row g-4 d-none">
+    <!-- Imagen -->
+    <div class="col-md-5">
+      <div id="imgContainer" class="rounded-3 overflow-hidden bg-success bg-opacity-10
+           d-flex align-items-center justify-content-center" style="height:340px;">
+        <i class="bi bi-box-seam text-success" style="font-size:5rem;" aria-hidden="true"></i>
+      </div>
+    </div>
+
+    <!-- Info -->
+    <div class="col-md-7 d-flex flex-column">
+      <span id="badgeCategoria" class="badge bg-success bg-opacity-10 text-success
+            text-uppercase small fw-semibold w-auto mb-2" style="width:fit-content!important;"></span>
+      <h1 id="nombreProducto" class="h2 fw-bold mb-1"></h1>
+      <p id="productorInfo" class="text-muted small mb-3"></p>
+      <p id="precioProducto" class="display-6 fw-bold text-success mb-1"></p>
+      <p id="stockProducto" class="small mb-3"></p>
+      <p id="descProducto" class="text-muted mb-4 flex-grow-1"></p>
+
+      <!-- Acciones: COMPRADOR puede agregar al carrito / hacer pedido -->
+      <div sec:authorize="hasRole('COMPRADOR')" id="accionComprador">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <label for="cantidad" class="fw-medium">Cantidad:</label>
+          <div class="input-group" style="width:140px;">
+            <button class="btn btn-outline-secondary" type="button" id="btnMenos">−</button>
+            <input type="number" class="form-control text-center" id="cantidad"
+                   value="1" min="1">
+            <button class="btn btn-outline-secondary" type="button" id="btnMas">+</button>
+          </div>
+        </div>
+        <button class="btn btn-success btn-lg px-5 w-100" id="btnPedir">
+          <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>Hacer pedido
+        </button>
+      </div>
+
+      <!-- Acciones: PRODUCTOR dueño o ADMIN pueden editar -->
+      <div id="accionEditor" class="d-none">
+        <div class="d-flex gap-2">
+          <a id="btnEditar" href="#" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i>Editar producto
+          </a>
+          <button id="btnEliminar" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-1"></i>Eliminar
+          </button>
+        </div>
+      </div>
+
+      <!-- Anónimo -->
+      <div sec:authorize="isAnonymous()">
+        <a th:href="@{/login}" class="btn btn-success btn-lg w-100">
+          <i class="bi bi-person me-2"></i>Inicia sesión para comprar
+        </a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal confirmación pedido -->
+<div class="modal fade" id="modalPedido" tabindex="-1" aria-labelledby="modalPedidoLabel">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalPedidoLabel">
+          <i class="bi bi-bag-check me-2 text-success"></i>Confirmar pedido
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="resumenPedido" class="mb-3"></p>
+        <div class="mb-3">
+          <label for="municipioEnvio" class="form-label fw-medium">Municipio de envío *</label>
+          <select class="form-select" id="municipioEnvio" required></select>
+        </div>
+        <div class="mb-3">
+          <label for="direccionEnvio" class="form-label fw-medium">Dirección de envío *</label>
+          <input type="text" class="form-control" id="direccionEnvio" required
+                 placeholder="Ej: Cra 5 #10-20, Barrio Centro">
+        </div>
+        <div id="alertModal" role="alert" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-success" id="btnConfirmarPedido">
+          <span class="spinner-border spinner-border-sm d-none me-2"
+                id="pedidoSpinner" aria-hidden="true"></span>
+          Confirmar pedido
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script th:src="@{/js/municipios.js}"></script>
+<div th:replace="~{fragments/base :: scripts}"></div>
+<script th:inline="javascript">
+  const PRODUCTO_ID = parseInt(window.location.pathname.split('/').pop());
+  let productoActual = null;
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    llenarSelectMunicipios('municipioEnvio');
+    try {
+      productoActual = await apiFetch('/api/productos/' + PRODUCTO_ID);
+      if (!productoActual) return;
+      renderProducto(productoActual);
+    } catch(err) {
+      document.getElementById('skeleton').innerHTML =
+              `<div class="alert alert-danger">No se pudo cargar el producto: ${escHtml(err.message)}</div>`;
+    }
+  });
+
+  function renderProducto(p) {
+    document.getElementById('skeleton').classList.add('d-none');
+    document.getElementById('contenido').classList.remove('d-none');
+    document.title = p.nombre + ' | AgroYa';
+
+    document.getElementById('badgeCategoria').textContent  = p.categoriaNombre ?? 'Producto';
+    document.getElementById('nombreProducto').textContent  = p.nombre;
+    document.getElementById('productorInfo').textContent   = '🌱 ' + (p.productorNombre ?? 'Productor AgroYa');
+    document.getElementById('descProducto').textContent    = p.descripcion ?? 'Sin descripción.';
+
+    const precio = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(p.precio);
+    document.getElementById('precioProducto').textContent = precio + ' / ' + (p.unidad ?? 'ud');
+
+    const stockEl = document.getElementById('stockProducto');
+    if (p.stock <= 0) {
+      stockEl.innerHTML = '<span class="badge bg-danger">Sin stock</span>';
+      document.getElementById('btnPedir')?.setAttribute('disabled','');
+    } else if (p.stock <= 10) {
+      stockEl.innerHTML = `<span class="badge bg-warning text-dark"> Solo ${p.stock} ${p.unidad ?? 'ud'} disponibles</span>`;
+    } else {
+      stockEl.innerHTML = `<span class="badge bg-success">✓ ${p.stock} ${p.unidad ?? 'ud'} disponibles</span>`;
+    }
+    document.getElementById('cantidad').max = p.stock;
+
+    if (p.imageUrl) {
+      document.getElementById('imgContainer').innerHTML =
+              `<img src="${escHtml(p.imageUrl)}" class="img-fluid w-100 h-100"
+            style="object-fit:cover;" alt="${escHtml(p.nombre)}">`;
+    }
+
+    // Mostrar botones de edición si es el productor dueño o admin
+    const roles = JSON.parse(sessionStorage.getItem('agroya_roles') ?? '[]');
+    const user  = sessionStorage.getItem('agroya_user') ?? '';
+    const esEditor = roles.includes('ROLE_ADMIN') ||
+            (roles.includes('ROLE_PRODUCTOR') && p.productorNombre && user);
+    if (esEditor) {
+      const editorDiv = document.getElementById('accionEditor');
+      editorDiv.classList.remove('d-none');
+      document.getElementById('btnEditar').href = '/productos/' + PRODUCTO_ID + '/editar';
+    }
+  }
+
+  /* ── Cantidad +/- ───────────────────────────── */
+  document.getElementById('btnMenos')?.addEventListener('click', () => {
+    const inp = document.getElementById('cantidad');
+    if (parseInt(inp.value) > 1) inp.value = parseInt(inp.value) - 1;
+  });
+  document.getElementById('btnMas')?.addEventListener('click', () => {
+    const inp = document.getElementById('cantidad');
+    const max = parseInt(inp.max) || 9999;
+    if (parseInt(inp.value) < max) inp.value = parseInt(inp.value) + 1;
+  });
+
+  /* ── Hacer pedido ────────────────────────────── */
+  document.getElementById('btnPedir')?.addEventListener('click', () => {
+    const cantidad = parseInt(document.getElementById('cantidad').value);
+    const precio = new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0})
+            .format(productoActual.precio * cantidad);
+    document.getElementById('resumenPedido').innerHTML =
+            `<strong>${escHtml(productoActual.nombre)}</strong> × ${cantidad} = <strong class="text-success">${precio}</strong>`;
+    new bootstrap.Modal(document.getElementById('modalPedido')).show();
+  });
+
+  document.getElementById('btnConfirmarPedido')?.addEventListener('click', async () => {
+    const municipio  = document.getElementById('municipioEnvio').value.trim();
+    const direccion  = document.getElementById('direccionEnvio').value.trim();
+    const alertModal = document.getElementById('alertModal');
+
+    if (!municipio || !direccion) {
+      alertModal.innerHTML = `<div class="alert alert-warning mb-0">Completa municipio y dirección.</div>`;
+      return;
+    }
+
+    const btn = document.getElementById('btnConfirmarPedido');
+    const sp  = document.getElementById('pedidoSpinner');
+    btn.disabled = true; sp.classList.remove('d-none');
+
+    try {
+      await apiFetch('/api/pedidos', {
+        method: 'POST',
+        body: JSON.stringify({
+          municipioEnvio: municipio,
+          direccionEnvio: direccion,
+          items: [{ productoId: PRODUCTO_ID, cantidad: parseInt(document.getElementById('cantidad').value) }],
+        }),
+      });
+      sessionStorage.setItem('agroya_msg', '✅ ¡Pedido realizado exitosamente!');
+      window.location.href = '/pedidos/mis-pedidos';
+    } catch(err) {
+      alertModal.innerHTML = `<div class="alert alert-danger mb-0">${escHtml(err.message)}</div>`;
+      btn.disabled = false; sp.classList.add('d-none');
+    }
+  });
+
+  /* ── Eliminar producto ───────────────────────── */
+  document.getElementById('btnEliminar')?.addEventListener('click', async () => {
+    if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+    try {
+      await apiFetch('/api/productos/' + PRODUCTO_ID, { method: 'DELETE' });
+      sessionStorage.setItem('agroya_msg', 'Producto eliminado.');
+      window.location.href = '/productos';
+    } catch(err) {
+      mostrarAlerta('Error al eliminar: ' + err.message);
+    }
+  });
+</script>
+</body>
+</html>
